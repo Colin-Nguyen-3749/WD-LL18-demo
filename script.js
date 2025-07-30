@@ -1,12 +1,12 @@
 // --- DOM elements ---
 const randomBtn = document.getElementById("random-btn");
 const recipeDisplay = document.getElementById("recipe-display");
-const remixBtn = document.getElementById("remix-btn");
-const remixThemeSelect = document.getElementById("remix-theme");
-const remixDisplay = document.getElementById("remix-display");
+const remixBtn = document.getElementById("remix-btn"); // The Remix button
+const remixThemeSelect = document.getElementById("remix-theme"); // The theme dropdown
+const remixOutput = document.getElementById("remix-output"); // Where the remix will be shown
 
-// Store the current recipe data so we can remix it later
-let currentRecipe = null;
+// Store the last displayed recipe so we can remix it
+let lastRecipe = null;
 
 // This function creates a list of ingredients for the recipe from the API data
 // It loops through the ingredients and measures, up to 20, and returns an HTML string
@@ -17,16 +17,15 @@ function getIngredientsHtml(recipe) {
   for (let i = 1; i <= 20; i++) {
     const ing = recipe[`strIngredient${i}`];
     const meas = recipe[`strMeasure${i}`];
-    if (ing && ing.trim()) html += `<li>${meas ? `${meas} ` : ""}${ing}</li>`;
+    if (ing && ing.trim()) {
+      html += `<li>${meas ? `${meas} ` : ""}${ing}</li>`;
+    }
   }
   return html;
 }
 
 // This function displays the recipe on the page
 function renderRecipe(recipe) {
-  // Save the current recipe so we can remix it
-  currentRecipe = recipe;
-  
   recipeDisplay.innerHTML = `
     <div class="recipe-title-row">
       <h2>${recipe.strMeal}</h2>
@@ -37,6 +36,8 @@ function renderRecipe(recipe) {
     <h3>Instructions:</h3>
     <p>${recipe.strInstructions.replace(/\r?\n/g, "<br>")}</p>
   `;
+  // Save the recipe so we can remix it
+  lastRecipe = recipe;
 }
 
 // This function gets a random recipe from the API and shows it
@@ -45,95 +46,56 @@ async function fetchAndDisplayRandomRecipe() {
   try {
     // Fetch a random recipe from the MealDB API
     const res = await fetch('https://www.themealdb.com/api/json/v1/1/random.php'); // Replace with the actual API URL
-    
+    console.log(res);
     const data = await res.json(); // Parse the JSON response
+    console.log(data);
     const recipe = data.meals[0]; // Get the first recipe from the response
     renderRecipe(recipe);
-
+    remixOutput.innerHTML = ""; // Clear previous remix when new recipe loads
   } catch (error) {
     recipeDisplay.innerHTML = "<p>Sorry, couldn't load a recipe.</p>";
   }
 }
 
-
-// This helper function converts ingredients to plain text for sending to OpenAI
-function getIngredientsText(recipe) {
-  let ingredients = [];
-  for (let i = 1; i <= 20; i++) {
-    const ing = recipe[`strIngredient${i}`];
-    const meas = recipe[`strMeasure${i}`];
-    if (ing && ing.trim()) {
-      ingredients.push(`${meas ? `${meas} ` : ""}${ing}`);
-    }
-  }
-  return ingredients.join(', ');
-}
-
-// This function takes the current recipe and remix theme, sends them to OpenAI,
-// and displays the remixed recipe on the page
-async function remixRecipe() {
-  // Make sure we have a recipe to remix
-  if (!currentRecipe) {
-    alert("Please load a recipe first!");
-    return;
-  }
-
-  // Get the theme the user selected
-  const remixTheme = remixThemeSelect.value;
-  
-  // Show a fun loading message while we wait for OpenAI
-  remixDisplay.innerHTML = "<p>🍳 Cooking up your remix... This might take a moment!</p>";
-
+// This function sends the recipe and theme to OpenAI and displays the remix
+async function remixRecipe(recipe, theme) {
+  // Show a loading message while waiting for AI
+  remixOutput.innerHTML = "<p>Remixing your recipe... Hang tight, chef! 🧑‍🍳✨</p>";
   try {
-    // Prepare the recipe data to send to OpenAI
-    const recipeText = `
-Recipe: ${currentRecipe.strMeal}
-Ingredients: ${getIngredientsText(currentRecipe)}
-Instructions: ${currentRecipe.strInstructions}
-    `.trim();
+    // Prepare the prompt for the AI
+    const prompt = `Remix this recipe for the theme: ${theme}.\n\nRecipe JSON:\n${JSON.stringify(recipe, null, 2)}\n\nPlease reply with a short, fun, creative, and doable remix. Highlight any changed ingredients or instructions.`;
 
-    // Send the recipe and theme to OpenAI's chat completions API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    // Send the request to OpenAI's chat completions API
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4.1',
+        model: "gpt-4.1",
         messages: [
-          {
-            role: 'user',
-            content: `Please remix this recipe with a ${remixTheme} theme. Make it short, fun, creative, and totally doable. Highlight any changed ingredients or cooking instructions:\n\n${recipeText}`
-          }
+          { role: "user", content: prompt }
         ],
-        max_tokens: 500,
-        temperature: 0.8
+        max_tokens: 400,
+        temperature: 0.9
       })
     });
 
-    // Get the response data from OpenAI
-    const data = await response.json();
-    
-    // Check if we got a good response
-    if (data.choices && data.choices[0]) {
-      // Display the remixed recipe on the page
-      const remixedRecipe = data.choices[0].message.content;
-      remixDisplay.innerHTML = `
-        <h3>🎉 Your ${remixTheme} Remix:</h3>
-        <div class="remix-content">${remixedRecipe.replace(/\n/g, '<br>')}</div>
-      `;
+    // Parse the response
+    const result = await response.json();
+    // Get the AI's reply
+    const aiReply = result.choices && result.choices[0] && result.choices[0].message.content;
+    if (aiReply) {
+      remixOutput.innerHTML = `<p>${aiReply.replace(/\n/g, "<br>")}</p>`;
     } else {
-      throw new Error('No response from AI');
+      remixOutput.innerHTML = "<p>Sorry, the AI couldn't remix your recipe this time.</p>";
     }
-
-  } catch (error) {
-    // Show a friendly error message if something goes wrong
-    remixDisplay.innerHTML = `
-      <p>😅 Oops! Something went wrong while creating your remix. Please try again!</p>
-    `;
+  } catch (err) {
+    remixOutput.innerHTML = "<p>Oops! Something went wrong while remixing. Please try again later.</p>";
   }
 }
+
 
 // --- Event listeners ---
 
@@ -142,12 +104,17 @@ randomBtn.addEventListener("click", () => {
   fetchAndDisplayRandomRecipe();
 });
 
-// When the remix button is clicked, remix the current recipe
+// When the Remix button is clicked, send the recipe and theme to OpenAI
 remixBtn.addEventListener("click", () => {
-  remixRecipe();
+  if (lastRecipe) {
+    const theme = remixThemeSelect.value;
+    remixRecipe(lastRecipe, theme);
+  } else {
+    remixOutput.innerHTML = "<p>Load a recipe first before remixing!</p>";
+  }
 });
 
 // When the page loads, show a random recipe right away
-document.addEventListener("DOMContentLoaded", () =>{
+document.addEventListener("DOMContentLoaded", () => {
   fetchAndDisplayRandomRecipe();
 });

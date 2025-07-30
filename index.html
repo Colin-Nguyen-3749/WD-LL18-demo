@@ -1,58 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chef's Twist</title>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Recipe Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main>
-    <h1>
-      <span class="material-symbols-outlined icon-main">chef_hat</span>
-      Chef's Twist
-    </h1>
-
-    <button id="random-btn" class="main-btn">
-      <span class="material-symbols-outlined icon-btn">shuffle</span>
-      Surprise Me Again!
-    </button>
-
-    <!-- Only show this container if there are saved recipes (handled in JS) -->
-    <div id="saved-recipes-container" style="display:none;">
-      <h3>Saved Recipes</h3>
-      <ul id="saved-recipes-list"></ul>
-    </div>
-
-    <div id="recipe-display"></div>
-
-    <div class="remix-container">
-      <div class="remix-controls">
-        <label for="remix-theme">
-          <span class="material-symbols-outlined icon-label">stars_2</span>
-          Choose a remix theme:
-        </label>
-        <div class="select-container">
-          <select id="remix-theme">
-            <option>Make it vegan</option>
-            <option>Turn it into a dessert</option>
-            <option>Turn it into a pizza</option>
-            <option>Remix it for breakfast</option>
-            <option>Make it work in a dorm room with a microwave</option>
-            <option>Make this dish using only ingredients you could find at a gas station</option>
-          </select>
-          <button id="remix-btn" class="accent-btn">
-            <span class="material-symbols-outlined icon-btn">wand_stars</span>
-            Remix!
-          </button>
+    <div class="container">
+        <h1>
+          <span class="material-symbols-outlined icon-main">chef_hat</span>
+          Chef's Twist
+        </h1>
+        
+        <!-- Button to get a new random recipe -->
+        <button id="random-btn" class="main-btn">
+          <span class="material-symbols-outlined icon-btn">shuffle</span>
+          Surprise Me Again!
+        </button>
+        
+        <!-- Only show this container if there are saved recipes (handled in JS) -->
+        <div id="saved-recipes-container" style="display:none;">
+          <h3>Saved Recipes</h3>
+          <ul id="saved-recipes-list"></ul>
         </div>
-      </div>
-      <div id="remix-output" class="remix-box"></div>
+        
+        <!-- Where the original recipe will be displayed -->
+        <div id="recipe-display"></div>
+        
+        <!-- Remix controls for users to choose theme and remix -->
+        <div class="remix-controls" style="margin: 20px 0;">
+            <label for="remix-theme">
+              <span class="material-symbols-outlined icon-label">stars_2</span>
+              Choose a remix theme:
+            </label>
+            <div class="select-container">
+              <select id="remix-theme">
+                  <option>Make it vegan</option>
+                  <option>Turn it into a dessert</option>
+                  <option>Turn it into a pizza</option>
+                  <option>Remix it for breakfast</option>
+                  <option>Make it work in a dorm room with a microwave</option>
+                  <option>Make this dish using only ingredients you could find at a gas station</option>
+              </select>
+              <button id="remix-btn" class="accent-btn">
+                <span class="material-symbols-outlined icon-btn">wand_stars</span>
+                Remix!
+              </button>
+            </div>
+        </div>
+        
+        <!-- Where the remixed recipe will be displayed -->
+        <div id="remix-output" class="remix-box"></div>
     </div>
-  </main>
-  <script src="secrets.js"></script>
-  <script src="script.js"></script>
+
+    <!-- Load the secrets file FIRST, then the main script -->
+    <script src="secrets.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
